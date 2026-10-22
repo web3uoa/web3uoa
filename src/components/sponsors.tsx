@@ -24,6 +24,12 @@ const sponsorTiers = [
         logoWidth: 220,
         logoHeight: 90,
       },
+      {
+        name: "NewMoney",
+        logo: "/logo/newmoney_logo.webp",
+        logoWidth: 461,
+        logoHeight: 126,
+      },
     ],
   },
   {
