@@ -1,129 +1,153 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { Button } from "@/components/ui/button";
+import { EmailPanel } from "@/components/admin/email-panel";
+import { isAllowedAdminAddress } from "@/lib/admin-auth";
+
+type SessionState = "checking" | "signed-out" | "signed-in" | "error";
 
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const [authHeader, setAuthHeader] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
-
-  const [claims, setClaims] = useState<any[]>([]);
-  const [activeNames, setActiveNames] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [sessionState, setSessionState] = useState<SessionState>("checking");
+  const [sessionAddress, setSessionAddress] = useState<string | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const authenticate = async () => {
-    if (!address) return;
+  const checkSession = useCallback(async () => {
+    setSessionState("checking");
+    setAuthError("");
     try {
-      const timestamp = Date.now().toString();
-      const signature = await signMessageAsync({
-        message: `Admin Auth ${timestamp}`,
+      const res = await fetch("/api/admin/auth/session", {
+        credentials: "same-origin",
+        cache: "no-store",
       });
-
-      const headers = {
-        "x-admin-address": address,
-        "x-admin-signature": signature,
-        "x-admin-timestamp": timestamp,
-      };
-
-      setAuthHeader(headers);
-      fetchData(headers);
-    } catch (err: any) {
-      setError(err.message || "Failed to authenticate");
+      if (res.status === 401) {
+        setSessionAddress(null);
+        setSessionState("signed-out");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || typeof data.address !== "string") {
+        throw new Error(data.error || "Could not check admin session.");
+      }
+      setSessionAddress(data.address.toLowerCase());
+      setSessionState("signed-in");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Could not check admin session.");
+      setSessionState("error");
     }
-  };
+  }, []);
 
-  const fetchData = async (headers: any) => {
-    setLoading(true);
+  useEffect(() => {
+    if (mounted) void checkSession();
+  }, [mounted, checkSession]);
+
+  const signIn = async () => {
+    if (!address || !isAllowedAdminAddress(address)) return;
+    setAuthBusy(true);
+    setAuthError("");
     try {
-      const [claimsRes, namesRes] = await Promise.all([
-        fetch("/api/admin/claims", { headers }),
-        fetch("/api/admin/names", { headers }),
-      ]);
-
-      if (claimsRes.ok) {
-        const data = await claimsRes.json();
-        setClaims(data.claims || []);
+      const challengeRes = await fetch("/api/admin/auth/challenge", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const challenge = await challengeRes.json().catch(() => ({}));
+      if (!challengeRes.ok) {
+        throw new Error(challenge.error || `Sign-in failed (${challengeRes.status})`);
       }
 
-      if (namesRes.ok) {
-        const data = await namesRes.json();
-        setActiveNames(data || []);
-      } else {
-        const err = await namesRes.json();
-        if (err.error === "Unauthorized") {
-          setAuthHeader(null); // Force re-auth
-        }
+      const signature = await signMessageAsync({ message: challenge.message });
+      const loginRes = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, nonce: challenge.nonce, signature }),
+      });
+      const login = await loginRes.json().catch(() => ({}));
+      if (!loginRes.ok) {
+        throw new Error(login.error || `Sign-in failed (${loginRes.status})`);
       }
-    } catch (err: any) {
-      setError(err.message);
+
+      setSessionAddress(String(login.address).toLowerCase());
+      setSessionState("signed-in");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Could not sign in.");
     } finally {
-      setLoading(false);
+      setAuthBusy(false);
     }
   };
 
-  const handleApprove = async (claimId: string) => {
-    if (!authHeader) return;
+  const signOut = async () => {
+    setAuthBusy(true);
+    setAuthError("");
     try {
-      const res = await fetch("/api/admin/approve", {
+      const res = await fetch("/api/admin/auth/logout", {
         method: "POST",
-        headers: { ...authHeader, "Content-Type": "application/json" },
-        body: JSON.stringify({ claimId }),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
       });
-      if (!res.ok) throw new Error("Approval failed");
-      fetchData(authHeader);
-    } catch (err: any) {
-      alert(err.message);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Sign-out failed (${res.status})`);
+      setSessionAddress(null);
+      setSessionState("signed-out");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Could not sign out.");
+    } finally {
+      setAuthBusy(false);
     }
   };
 
-  const handleReject = async (claimId: string) => {
-    if (!authHeader) return;
-    try {
-      const res = await fetch("/api/admin/claims", {
-        method: "PUT",
-        headers: { ...authHeader, "Content-Type": "application/json" },
-        body: JSON.stringify({ id: claimId, status: "REJECTED" }),
-      });
-      if (!res.ok) throw new Error("Rejection failed");
-      fetchData(authHeader);
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const handleRevoke = async (name: string) => {
-    if (!authHeader) return;
-    if (!confirm(`Are you sure you want to revoke ${name}.web3uoa.eth?`))
-      return;
-
-    try {
-      const res = await fetch("/api/admin/revoke", {
-        method: "POST",
-        headers: { ...authHeader, "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error("Revoke failed");
-      fetchData(authHeader);
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  if (!mounted) {
+  if (!mounted || sessionState === "checking") {
     return (
-      <div
-        className="min-h-screen py-24 flex items-center justify-center container mx-auto px-4"
-        suppressHydrationWarning
-      >
-        <p className="text-foreground/70">Loading...</p>
+      <div className="min-h-screen py-24 flex items-center justify-center container mx-auto px-4">
+        <p className="text-foreground/70">Checking admin session…</p>
+      </div>
+    );
+  }
+
+  if (sessionState === "error") {
+    return (
+      <div className="min-h-screen py-24 flex items-center justify-center container mx-auto px-4">
+        <div className="max-w-lg text-center">
+          <h1 className="mb-4 text-3xl font-bold">Could not check admin session</h1>
+          <p className="mb-6 text-foreground/70">{authError}</p>
+          <Button onClick={checkSession}>Try again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionState === "signed-in" && sessionAddress) {
+    return (
+      <div className="min-h-screen py-24 container mx-auto px-4">
+        <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-4xl font-black">Admin Dashboard</h1>
+            <p className="mt-2 break-all font-mono text-xs text-foreground/60">
+              Signed in as {sessionAddress}
+            </p>
+          </div>
+          <Button variant="outline" onClick={signOut} disabled={authBusy}>
+            {authBusy ? "Signing out…" : "Sign out"}
+          </Button>
+        </div>
+        {authError && (
+          <p className="mb-6 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+            {authError}
+          </p>
+        )}
+        <EmailPanel />
       </div>
     );
   }
@@ -132,9 +156,26 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen py-24 flex items-center justify-center container mx-auto px-4">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
-          <p className="mb-6 text-foreground/70">
-            Connect owner wallet to access.
+          <h1 className="mb-6 text-3xl font-bold">Admin Panel</h1>
+          <p className="mb-6 text-foreground/70">Connect an admin wallet to sign in.</p>
+          <div className="flex justify-center">
+            <appkit-button balance="hide" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAllowedAdminAddress(address)) {
+    return (
+      <div className="min-h-screen py-24 flex items-center justify-center container mx-auto px-4">
+        <div className="text-center">
+          <h1 className="mb-4 text-3xl font-bold">Not an admin wallet</h1>
+          <p className="mb-2 text-foreground/70">
+            This wallet isn&apos;t on the admin allowlist.
+          </p>
+          <p className="mb-6 break-all font-mono text-xs text-foreground/50">
+            {address}
           </p>
           <div className="flex justify-center">
             <appkit-button balance="hide" />
@@ -144,112 +185,18 @@ export default function AdminPage() {
     );
   }
 
-  if (!authHeader) {
-    return (
-      <div className="min-h-screen py-24 flex flex-col items-center justify-center container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-6">Admin Verification</h1>
-        <p className="mb-6 text-foreground/70">
-          Please sign a message to verify you are the admin.
-        </p>
-        <Button onClick={authenticate}>Sign Message</Button>
-        {error && <p className="text-red-500 mt-4">{error}</p>}
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen py-24 container mx-auto px-4">
-      <div className="flex justify-between items-center mb-12">
-        <h1 className="text-4xl font-black">Admin Dashboard</h1>
-        <Button onClick={() => fetchData(authHeader)} variant="outline">
-          Refresh
+    <div className="min-h-screen py-24 flex items-center justify-center container mx-auto px-4">
+      <div className="max-w-lg text-center">
+        <h1 className="mb-4 text-3xl font-bold">Sign in to the Admin Panel</h1>
+        {authError && (
+          <p className="mb-6 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+            {authError}
+          </p>
+        )}
+        <Button onClick={signIn} disabled={authBusy}>
+          {authBusy ? "Signing in…" : "Sign in with wallet"}
         </Button>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-12">
-        {/* Pending Claims Queue */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6 border-b border-border pb-4">
-            Pending Requests
-          </h2>
-          {loading && <p>Loading...</p>}
-          <div className="flex flex-col gap-4">
-            {claims
-              .filter((c) => c.status === "PENDING")
-              .map((claim) => (
-                <div
-                  key={claim.id}
-                  className="bg-secondary/30 p-4 rounded-xl border border-border flex justify-between items-center"
-                >
-                  <div>
-                    <p className="font-bold text-lg">
-                      {claim.requestedName}.web3uoa.eth
-                    </p>
-                    <p className="text-xs text-foreground/60 break-all">
-                      {claim.walletAddress}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => handleApprove(claim.id)}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleReject(claim.id)}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            {claims.filter((c) => c.status === "PENDING").length === 0 &&
-              !loading && (
-                <p className="text-foreground/50 italic">
-                  No pending requests.
-                </p>
-              )}
-          </div>
-        </div>
-
-        {/* Active Names */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6 border-b border-border pb-4">
-            Active Subnames
-          </h2>
-          {loading && <p>Loading...</p>}
-          <div className="flex flex-col gap-4">
-            {activeNames.map((ens) => (
-              <div
-                key={ens.name}
-                className="bg-secondary/30 p-4 rounded-xl border border-border flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-bold text-lg">{ens.name}.web3uoa.eth</p>
-                  <p className="text-xs text-foreground/60 break-all">
-                    {ens.address}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleRevoke(ens.name)}
-                >
-                  Revoke
-                </Button>
-              </div>
-            ))}
-            {activeNames.length === 0 && !loading && (
-              <p className="text-foreground/50 italic">
-                No active subnames found.
-              </p>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

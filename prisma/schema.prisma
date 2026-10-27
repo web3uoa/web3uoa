@@ -22,3 +22,32 @@ model ClaimRequest {
   @@unique([walletAddress, status]) // Basic constraint to prevent spamming pending requests per wallet
 }
 
+model AdminLoginChallenge {
+  nonce         String    @id
+  walletAddress String
+  origin        String
+  issuedAt      DateTime
+  expiresAt     DateTime
+  consumedAt    DateTime?
+
+  @@index([walletAddress, expiresAt])
+  @@index([expiresAt])
+}
+
+model AdminSession {
+  id            String   @id @default(cuid())
+  tokenHash     String   @unique
+  walletAddress String
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([walletAddress, expiresAt])
+  @@index([expiresAt])
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
