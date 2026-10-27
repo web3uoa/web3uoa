@@ -1,109 +1,65 @@
-import { Button } from "@/components/ui/button";
-import { Instagram, Linkedin, ArrowRight } from "lucide-react";
+const socials = [
+  { label: "instagram", href: "https://instagram.com/web3uoa" },
+  { label: "x", href: "https://x.com/web3uoa" },
+  {
+    label: "linkedin",
+    href: "https://www.linkedin.com/company/web3uoa-university-of-auckland-web3-club/",
+  },
+];
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden border-b border-border/50">
-      <div className="container relative z-10 px-4 pt-32 pb-20">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-16">
-          {/* Hero text (left side) */}
-          <div className="flex-1 space-y-8 text-center lg:text-left">
-            <span className="inline-block text-xs font-black uppercase tracking-[0.3em] text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-              University of Auckland
-            </span>
-            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] font-black tracking-tight text-foreground leading-[1.05]">
-              WEB3<span className="text-primary">UOA</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground font-medium tracking-wide max-w-2xl mx-auto lg:mx-0">
-              Educating the next generation of blockchain innovators.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4 pt-4">
-              <Button
-                size="lg"
-                className="text-base px-8 h-14 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 rounded-xl font-bold"
-                asChild
-              >
-                <a
-                  href="https://forms.gle/vzRb7t46SPBUwi7v8"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Join the Club <ArrowRight className="ml-2 w-5 h-5" />
-                </a>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-base px-8 h-14 border-2 transition-all hover:bg-secondary rounded-xl font-bold"
-                asChild
-              >
-                <a href="#about">Learn More</a>
-              </Button>
-            </div>
-
-            {/* Social Links */}
-            <div className="flex items-center lg:justify-start justify-center gap-8 pt-8">
-              <a
-                href="https://instagram.com/web3uoa"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors hover:-translate-y-1 transform duration-200"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-6 h-6" />
-              </a>
-              <a
-                href="https://x.com/web3uoa"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors hover:-translate-y-1 transform duration-200"
-                aria-label="X (Twitter)"
-              >
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-              <a
-                href="https://www.linkedin.com/company/web3uoa-university-of-auckland-web3-club/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors hover:-translate-y-1 transform duration-200"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-6 h-6" />
-              </a>
-            </div>
-          </div>
-
-          {/* Logo element (right side) */}
-          <div className="flex-1 flex justify-center lg:justify-end items-center relative">
-            {/* The cube effect */}
+    <header
+      id="top"
+      className="relative mx-auto flex min-h-[max(560px,calc(100svh-60px))] max-w-[1600px] flex-col px-5 pb-10 pt-6 sm:px-7"
+    >
+      <h1 className="relative m-0 min-h-[260px] flex-1">
+        <span className="sr-only">WEB3UOA</span>
+        <canvas
+          data-hero-canvas="1"
+          aria-hidden="true"
+          className="absolute inset-0 block h-full w-full"
+        />
+      </h1>
+      <div
+        data-rv="1"
+        className="mt-7 flex flex-wrap items-end justify-between gap-8"
+      >
+        <p className="m-0 max-w-[26ch] text-pretty text-[length:clamp(20px,2.4vw,28px)] leading-[1.35] text-subtle">
+          Educating the next generation of blockchain innovators.
+        </p>
+        <div>
+          <div className="flex flex-wrap gap-3.5">
             <a
-              href="#identity"
-              className="relative group w-64 h-64 md:w-96 md:h-96 block cursor-pointer"
-              title="Claim your Web3 ID!"
+              href="https://forms.gle/vzRb7t46SPBUwi7v8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-foreground px-7 py-[15px] text-base font-semibold text-background transition-colors hover:bg-primary"
             >
-              {/* Back subtle shadow */}
-              <div className="absolute inset-0 bg-primary/10 rounded-full blur-[100px] transition-all duration-700 group-hover:bg-primary/20" />
-
-              <img
-                src="/logo/web3uoa_logo.png"
-                alt="WEB3UOA Logo Cube"
-                className="w-full h-full object-contain drop-shadow-2xl animate-[float_4s_ease-in-out_infinite] transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-[10deg]"
-                style={{
-                  filter: "drop-shadow(0 25px 25px rgb(0 0 0 / 0.15))",
-                }}
-              />
+              Join the Club →
             </a>
+            <a
+              href="#about"
+              className="rounded-xl border border-input px-7 py-[15px] text-base font-medium text-foreground transition-colors hover:border-primary"
+            >
+              Learn More
+            </a>
+          </div>
+          <div className="mt-[22px] flex gap-[22px] font-mono text-[13px]">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-faint transition-colors hover:text-foreground"
+              >
+                {s.label}
+              </a>
+            ))}
           </div>
         </div>
       </div>
-    </section>
+    </header>
   );
 }

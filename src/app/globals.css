@@ -1,34 +1,41 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --font-sans:
+    var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+}
 
 @theme {
-  --font-sans:
-    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
-    monospace;
-    
-  --color-background: oklch(1 0 0); /* Pure White */
-  --color-foreground: oklch(0.15 0 0); /* Almost Black */
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.15 0 0);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.15 0 0);
-  --color-primary: oklch(0.55 0.22 260); /* Vibrant, accessible blue */
-  --color-primary-foreground: oklch(1 0 0);
-  --color-secondary: oklch(0.96 0 0); /* Light gray */
-  --color-secondary-foreground: oklch(0.15 0 0);
-  --color-muted: oklch(0.95 0 0);
-  --color-muted-foreground: oklch(0.45 0 0);
-  --color-accent: oklch(0.95 0 0);
-  --color-accent-foreground: oklch(0.15 0 0);
-  --color-destructive: oklch(0.6 0.2 25);
-  --color-destructive-foreground: oklch(1 0 0);
-  --color-border: oklch(0.9 0 0);
-  --color-input: oklch(0.9 0 0);
-  --color-ring: oklch(0.55 0.22 260);
+  --color-background: #07090e;
+  --color-foreground: #e8ecf4;
+  --color-card: oklch(0.18 0.015 265);
+  --color-card-foreground: #e8ecf4;
+  --color-popover: oklch(0.18 0.015 265);
+  --color-popover-foreground: #e8ecf4;
+  --color-primary: oklch(0.82 0.15 175); /* Teal */
+  --color-primary-foreground: #07090e;
+  --color-violet: oklch(0.78 0.15 290);
+  --color-secondary: oklch(0.18 0.015 265);
+  --color-secondary-foreground: #e8ecf4;
+  --color-muted: oklch(0.2 0.015 265);
+  --color-muted-foreground: #8a94a8;
+  --color-subtle: #aab3c5;
+  --color-faint: #7d879b;
+  --color-accent: oklch(0.24 0.02 265);
+  --color-accent-foreground: #e8ecf4;
+  --color-destructive: oklch(0.65 0.2 25);
+  --color-destructive-foreground: #fff;
+  --color-border: oklch(1 0 0 / 0.1);
+  --color-input: oklch(1 0 0 / 0.16);
+  --color-ring: oklch(0.82 0.15 175);
+  --color-nav: oklch(0.15 0.02 265 / 0.7);
+  --color-footer: oklch(0.12 0.015 265);
   --radius: 0.5rem;
 
   --animate-float: float 4s ease-in-out infinite;
@@ -47,6 +54,12 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -59,9 +72,47 @@
     min-height: 100vh;
   }
   ::selection {
-    background-color: oklch(0.55 0.22 260 / 0.2);
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
   }
   img {
     -webkit-user-drag: none;
   }
+}
+
+.bg-aurora {
+  background:
+    radial-gradient(60% 50% at 78% 20%, oklch(0.5 0.17 290 / 0.35), transparent 70%),
+    radial-gradient(50% 45% at 15% 5%, oklch(0.6 0.13 175 / 0.22), transparent 70%);
+}
+
+/* Light theme: overrides the dark tokens declared in @theme above. */
+:root[data-theme="light"] {
+  --color-background: #f5f7fb;
+  --color-foreground: #0c1220;
+  --color-card: #ffffff;
+  --color-card-foreground: #0c1220;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0c1220;
+  --color-primary: oklch(0.55 0.11 175);
+  --color-primary-foreground: #ffffff;
+  --color-violet: oklch(0.5 0.2 290);
+  --color-secondary: #eceff6;
+  --color-secondary-foreground: #0c1220;
+  --color-muted: #eceff6;
+  --color-muted-foreground: #556078;
+  --color-subtle: #47516a;
+  --color-faint: #66718a;
+  --color-accent: #e4e8f1;
+  --color-accent-foreground: #0c1220;
+  --color-border: oklch(0 0 0 / 0.1);
+  --color-input: oklch(0 0 0 / 0.18);
+  --color-ring: oklch(0.55 0.11 175);
+  --color-nav: oklch(0.98 0.005 265 / 0.75);
+  --color-footer: #eaedf5;
+}
+:root[data-theme="light"] .bg-aurora {
+  background:
+    radial-gradient(60% 50% at 78% 20%, oklch(0.75 0.12 290 / 0.28), transparent 70%),
+    radial-gradient(50% 45% at 15% 5%, oklch(0.8 0.1 175 / 0.25), transparent 70%);
 }

@@ -1,16 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useAccount } from "wagmi";
 import { isAllowedAdminAddress } from "@/lib/admin-auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
   { label: "About", href: "#about" },
   { label: "Events", href: "#events" },
   { label: "Partners", href: "#partners" },
-  { label: "Claim your Web3 ID!", href: "#identity", isCTA: true },
 ];
+
+const JOIN_URL = "https://forms.gle/vzRb7t46SPBUwi7v8";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -24,25 +25,28 @@ export function Navbar() {
   const isAdmin = mounted && isAllowedAdminAddress(address);
 
   return (
-    <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent py-4 text-foreground">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+    <nav className="sticky top-0 z-20 border-b border-border bg-nav backdrop-blur-[14px]">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-5 px-7 py-3.5">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-3 group">
+        <a
+          href="#top"
+          className="flex items-center gap-2.5 font-bold tracking-[0.02em] text-foreground"
+        >
           <img
             src="/logo/web3uoa_logo.png"
             alt="WEB3UOA"
-            className="w-10 h-10 transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
+            className="h-[30px] w-[30px] object-contain"
           />
-          <span className="text-xl font-black tracking-tight">WEB3UOA</span>
+          <span>WEB3UOA</span>
         </a>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden items-center gap-[26px] text-sm md:flex">
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className={`text-sm font-bold tracking-wide transition-all ${link.isCTA ? "text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20 hover:bg-primary/20 hover:-translate-y-0.5 shadow-sm" : "text-foreground/80 hover:text-primary"}`}
+              className="text-subtle transition-colors hover:text-foreground"
             >
               {link.label}
             </a>
@@ -50,50 +54,49 @@ export function Navbar() {
           {isAdmin && (
             <a
               href="/admin"
-              className="text-sm font-bold tracking-wide transition-colors text-yellow-500 hover:text-yellow-400"
+              className="text-amber-600 transition-colors hover:text-amber-500 dark:text-yellow-500 dark:hover:text-yellow-400"
             >
               Admin Panel
             </a>
           )}
-          <Button
-            size="sm"
-            className="rounded-xl px-6 py-5 font-bold shadow-md hover:shadow-lg transition-transform hover:-translate-y-0.5"
-            asChild
+          <ThemeToggle />
+          <a
+            href={JOIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-foreground px-[18px] py-[9px] font-semibold text-background transition-colors hover:bg-primary"
           >
-            <a
-              href="https://forms.gle/vzRb7t46SPBUwi7v8"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Join Us
-            </a>
-          </Button>
+            Join Us
+          </a>
         </div>
 
         {/* Mobile menu button */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 rounded-lg text-foreground transition-colors hover:bg-secondary"
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <Menu className="w-6 h-6" />
-          )}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="rounded-lg p-2 text-foreground transition-colors hover:bg-foreground/10"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-xl border-b border-border shadow-lg">
-          <div className="container mx-auto px-6 py-6 flex flex-col gap-4">
+        <div className="absolute left-0 right-0 top-full border-b border-border bg-background/95 backdrop-blur-xl md:hidden">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-7 py-6">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={`text-base font-bold py-2 transition-colors border-b border-border/50 ${link.isCTA ? "text-primary" : "text-foreground/80 hover:text-primary"}`}
+                className="border-b border-border py-2 text-base text-subtle transition-colors hover:text-foreground"
               >
                 {link.label}
               </a>
@@ -102,7 +105,7 @@ export function Navbar() {
               <a
                 href="/admin"
                 onClick={() => setMobileOpen(false)}
-                className="text-base font-bold text-yellow-500 hover:text-yellow-400 py-2 transition-colors border-b border-border/50"
+                className="border-b border-border py-2 text-base text-amber-600 transition-colors hover:text-amber-500 dark:text-yellow-500 dark:hover:text-yellow-400"
               >
                 Admin Panel
               </a>
@@ -110,22 +113,25 @@ export function Navbar() {
             <div className="flex justify-center py-2">
               <appkit-button balance="hide" />
             </div>
-            <Button
-              size="lg"
-              className="rounded-xl font-bold mt-4 w-full h-12"
-              asChild
+            <a
+              href={JOIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 rounded-full bg-foreground py-3 text-center font-semibold text-background"
             >
-              <a
-                href="https://forms.gle/vzRb7t46SPBUwi7v8"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join Us
-              </a>
-            </Button>
+              Join Us
+            </a>
           </div>
         </div>
       )}
+
+      {/* Scroll progress */}
+      <div className="absolute inset-x-0 -bottom-px h-0.5">
+        <div
+          data-prog="1"
+          className="h-full origin-left scale-x-0 bg-gradient-to-r from-primary to-violet"
+        />
+      </div>
     </nav>
   );
 }
