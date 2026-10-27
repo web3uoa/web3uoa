@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { EmailPanel } from "@/components/admin/email-panel";
+import { EnsPanel } from "@/components/admin/ens-panel";
 import { isAllowedAdminAddress } from "@/lib/admin-auth";
 
 type SessionState = "checking" | "signed-out" | "signed-in" | "error";
@@ -148,6 +149,7 @@ export default function AdminPage() {
           </p>
         )}
         <EmailPanel />
+        <EnsPanel />
       </div>
     );
   }

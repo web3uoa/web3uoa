@@ -1,24 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSession, isSameOriginRequest } from "@/lib/admin-session";
+import { isSameOriginRequest, requireAdminSession } from "@/lib/admin-session";
 import { isValidEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
-
-async function requireAdminSession(req: NextRequest): Promise<true | NextResponse> {
-  try {
-    if (await getAdminSession(req)) return true;
-    return NextResponse.json(
-      { error: "Admin session expired. Sign in again." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    );
-  } catch (err) {
-    console.error("Admin session check failed:", err);
-    return NextResponse.json(
-      { error: "Could not verify admin session." },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-}
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdminSession(req);

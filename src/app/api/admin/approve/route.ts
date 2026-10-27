@@ -1,33 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { setName } from "@/lib/namestone";
-import { verifyMessage } from "viem";
-import { isAllowedAdminAddress } from "@/lib/admin-auth";
-
-async function verifyAdminAuth(req: NextRequest) {
-  const address = req.headers.get("x-admin-address")?.toLowerCase();
-  const signature = req.headers.get("x-admin-signature");
-  const timestamp = req.headers.get("x-admin-timestamp");
-
-  if (!address || !signature || !timestamp || !isAllowedAdminAddress(address))
-    return false;
-  if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return false;
-
-  try {
-    return await verifyMessage({
-      address: address as `0x${string}`,
-      message: `Admin Auth ${timestamp}`,
-      signature: signature as `0x${string}`,
-    });
-  } catch {
-    return false;
-  }
-}
+import { isSameOriginRequest, requireAdminSession } from "@/lib/admin-session";
 
 export async function POST(req: NextRequest) {
-  const isAuth = await verifyAdminAuth(req);
-  if (!isAuth)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const auth = await requireAdminSession(req);
+  if (auth !== true) return auth;
 
   try {
     const { claimId } = await req.json();

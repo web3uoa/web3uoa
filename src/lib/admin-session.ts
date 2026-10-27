@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { isAllowedAdminAddress } from "@/lib/admin-auth";
 
 export const ADMIN_SESSION_COOKIE = "web3uoa_admin_session";
@@ -82,6 +82,24 @@ export async function getAdminSession(req: NextRequest) {
   }
 
   return { address: session.walletAddress };
+}
+
+export async function requireAdminSession(
+  req: NextRequest,
+): Promise<true | NextResponse> {
+  try {
+    if (await getAdminSession(req)) return true;
+    return NextResponse.json(
+      { error: "Admin session expired. Sign in again." },
+      { status: 401, headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (err) {
+    console.error("Admin session check failed:", err);
+    return NextResponse.json(
+      { error: "Could not verify admin session." },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }
 
 export async function deleteAdminSession(token?: string) {
