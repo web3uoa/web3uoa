@@ -1,11 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isSameOriginRequest, requireAdminSession } from "@/lib/admin-session";
+import { verifyMessage } from "viem";
+import { isAllowedAdminAddress } from "@/lib/admin-auth";
+
+async function verifyAdminAuth(req: NextRequest) {
+  const address = req.headers.get("x-admin-address")?.toLowerCase();
+  const signature = req.headers.get("x-admin-signature");
+  const timestamp = req.headers.get("x-admin-timestamp");
+
+  if (!address || !signature || !timestamp) return false;
+  if (!isAllowedAdminAddress(address)) return false;
+
+  // Prevent replay attacks (valid for 5 mins)
+  const now = Date.now();
+  if (now - parseInt(timestamp) > 5 * 60 * 1000) return false;
+
+  try {
+    const valid = await verifyMessage({
+      address: address as `0x${string}`,
+      message: `Admin Auth ${timestamp}`,
+      signature: signature as `0x${string}`,
+    });
+    return valid;
+  } catch {
+    return false;
+  }
+}
 
 // GET all claims (filter by status)
 export async function GET(req: NextRequest) {
-  const auth = await requireAdminSession(req);
-  if (auth !== true) return auth;
+  const isAuth = await verifyAdminAuth(req);
+  if (!isAuth)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
@@ -26,21 +52,13 @@ export async function GET(req: NextRequest) {
 
 // Update claim status (Approve / Reject)
 export async function PUT(req: NextRequest) {
-  if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const auth = await requireAdminSession(req);
-  if (auth !== true) return auth;
+  const isAuth = await verifyAdminAuth(req);
+  if (!isAuth)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const body = await req.json();
-    const { id, status } = body;
-    if (
-      typeof id !== "string" ||
-      (status !== "APPROVED" && status !== "REJECTED")
-    ) {
-      return NextResponse.json({ error: "Invalid claim update." }, { status: 400 });
-    }
+    const { id, status } = body; // status can be "APPROVED", "REJECTED"
 
     const updated = await prisma.claimRequest.update({
       where: { id },
