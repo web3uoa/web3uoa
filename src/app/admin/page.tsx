@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { EmailPanel } from "@/components/admin/email-panel";
@@ -8,6 +8,27 @@ import { EnsPanel } from "@/components/admin/ens-panel";
 import { isAllowedAdminAddress } from "@/lib/admin-auth";
 
 type SessionState = "checking" | "signed-out" | "signed-in" | "error";
+
+const adminDashboardTheme = {
+  colorScheme: "light",
+  "--color-background": "oklch(1 0 0)",
+  "--color-foreground": "oklch(0.15 0 0)",
+  "--color-card": "oklch(1 0 0)",
+  "--color-card-foreground": "oklch(0.15 0 0)",
+  "--color-popover": "oklch(1 0 0)",
+  "--color-popover-foreground": "oklch(0.15 0 0)",
+  "--color-primary": "oklch(0.55 0.22 260)",
+  "--color-primary-foreground": "oklch(1 0 0)",
+  "--color-secondary": "oklch(0.96 0 0)",
+  "--color-secondary-foreground": "oklch(0.15 0 0)",
+  "--color-muted": "oklch(0.95 0 0)",
+  "--color-muted-foreground": "oklch(0.45 0 0)",
+  "--color-accent": "oklch(0.95 0 0)",
+  "--color-accent-foreground": "oklch(0.15 0 0)",
+  "--color-border": "oklch(0.9 0 0)",
+  "--color-input": "oklch(0.9 0 0)",
+  "--color-ring": "oklch(0.55 0.22 260)",
+} as CSSProperties;
 
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
@@ -131,7 +152,10 @@ export default function AdminPage() {
 
   if (sessionState === "signed-in" && sessionAddress) {
     return (
-      <div className="min-h-screen py-24 container mx-auto px-4">
+      <div
+        className="min-h-screen bg-background py-24 text-foreground container mx-auto px-4"
+        style={adminDashboardTheme}
+      >
         <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-4xl font-black">Admin Dashboard</h1>
