@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { spawnSync } from "node:child_process";
 
 const rawUrl = process.env.DATABASE_URL;

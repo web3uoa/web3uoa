@@ -24,6 +24,9 @@ dist-ssr
 *.sw?
 
 *.next
+.vercel
 /src/generated/prisma
 
 .env
+
+members_emails.csv
