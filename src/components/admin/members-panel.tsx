@@ -73,7 +73,7 @@ export function MembersPanel({ onSelectionChange }: MembersPanelProps) {
     if (next.has(member.id)) next.delete(member.id);
     else next.set(member.id, member.email);
     setSelectedMembers(next);
-    onSelectionChange([...next.values()]);
+    onSelectionChange(Array.from(next.values()));
   };
 
   const toggleAllVisible = () => {
@@ -84,7 +84,7 @@ export function MembersPanel({ onSelectionChange }: MembersPanelProps) {
       for (const member of members) next.set(member.id, member.email);
     }
     setSelectedMembers(next);
-    onSelectionChange([...next.values()]);
+    onSelectionChange(Array.from(next.values()));
   };
 
   const importMembers = async () => {
@@ -132,7 +132,7 @@ export function MembersPanel({ onSelectionChange }: MembersPanelProps) {
         method: "DELETE",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...selectedMembers.keys()] }),
+        body: JSON.stringify({ ids: Array.from(selectedMembers.keys()) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Delete failed (${res.status})`);
