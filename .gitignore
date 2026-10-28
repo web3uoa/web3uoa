@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 *.next
+.vercel
 /src/generated/prisma
 
 .env
