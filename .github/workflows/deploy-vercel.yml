@@ -26,6 +26,8 @@ jobs:
         with:
           node-version: 22
 
+      - uses: oven-sh/setup-bun@v2
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
