@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const uniqueEmails = [...new Set(emails)];
+  const uniqueEmails = Array.from(new Set(emails));
   if (uniqueEmails.length === 0) {
     return NextResponse.json({ error: "Add at least one valid email." }, { status: 400 });
   }
@@ -125,7 +125,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Member IDs are invalid." }, { status: 400 });
   }
 
-  const ids = [...new Set(payload.ids as string[])];
+  const ids = Array.from(new Set(payload.ids as string[]));
   if (ids.length === 0) {
     return NextResponse.json({ error: "Select at least one member." }, { status: 400 });
   }
